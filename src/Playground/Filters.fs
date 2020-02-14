@@ -42,5 +42,5 @@ let testEleCollect l = List.collect eleDivs l
 
 // Looks like with the composed Option filters -> List.choose
 // is the winner. Only a little slower than the bool filer with
-// no recursion. Pretty sure it is not tail recursing, would it ever
-// be a problem though practically?
+// no recursion. I think that it is properly tail recurrsing though,
+// so should be fine as is? Less GC pressure at the least.
