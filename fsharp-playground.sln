@@ -1,0 +1,39 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 15
+VisualStudioVersion = 15.0.26124.0
+MinimumVisualStudioVersion = 15.0.26124.0
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{B9519386-B4FE-40D9-B84A-E7C23728A11C}"
+EndProject
+Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "Playground", "src\Playground\Playground.fsproj", "{CCB8A1B3-4C71-48F0-B579-A552DACF3A35}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Debug|x64 = Debug|x64
+		Debug|x86 = Debug|x86
+		Release|Any CPU = Release|Any CPU
+		Release|x64 = Release|x64
+		Release|x86 = Release|x86
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{CCB8A1B3-4C71-48F0-B579-A552DACF3A35}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{CCB8A1B3-4C71-48F0-B579-A552DACF3A35}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{CCB8A1B3-4C71-48F0-B579-A552DACF3A35}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{CCB8A1B3-4C71-48F0-B579-A552DACF3A35}.Debug|x64.Build.0 = Debug|Any CPU
+		{CCB8A1B3-4C71-48F0-B579-A552DACF3A35}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{CCB8A1B3-4C71-48F0-B579-A552DACF3A35}.Debug|x86.Build.0 = Debug|Any CPU
+		{CCB8A1B3-4C71-48F0-B579-A552DACF3A35}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{CCB8A1B3-4C71-48F0-B579-A552DACF3A35}.Release|Any CPU.Build.0 = Release|Any CPU
+		{CCB8A1B3-4C71-48F0-B579-A552DACF3A35}.Release|x64.ActiveCfg = Release|Any CPU
+		{CCB8A1B3-4C71-48F0-B579-A552DACF3A35}.Release|x64.Build.0 = Release|Any CPU
+		{CCB8A1B3-4C71-48F0-B579-A552DACF3A35}.Release|x86.ActiveCfg = Release|Any CPU
+		{CCB8A1B3-4C71-48F0-B579-A552DACF3A35}.Release|x86.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{CCB8A1B3-4C71-48F0-B579-A552DACF3A35} = {B9519386-B4FE-40D9-B84A-E7C23728A11C}
+	EndGlobalSection
+EndGlobal
