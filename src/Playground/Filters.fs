@@ -11,8 +11,7 @@ let isDivs = List.map isDivBy [ 3; 5 ]
 
 let maybeDivBy d i = if (i % d) = 0 then Some i else None
 let maybeDivs =
-    [ 3; 5 ]
-    |> List.map maybeDivBy
+    [ for i in [ 3; 5 ] -> maybeDivBy i ]
     |> List.reduce (fun f1 f2 -> f1 >> Option.bind f2)
 
 let emptyBind f a =
