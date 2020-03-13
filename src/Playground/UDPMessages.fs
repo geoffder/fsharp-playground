@@ -15,11 +15,10 @@ let strToBytes (str: string) =
 let bytesToStr (bs: byte array) =
     bs |> System.Text.Encoding.ASCII.GetString
 
-let sendingAgent port = MailboxProcessor<Message>.Start(fun inbox ->
+let sendingAgent () = MailboxProcessor<IPEndPoint * Message>.Start(fun inbox ->
     let client = new UdpClient ()
-    let endpoint = IPEndPoint (IPAddress.Any, port)
     let rec loop () = async {
-        let! msg = inbox.Receive ()
+        let! endpoint, msg =  inbox.Receive ()
         msg
         |> JsonConvert.SerializeObject
         |> strToBytes
@@ -30,7 +29,7 @@ let sendingAgent port = MailboxProcessor<Message>.Start(fun inbox ->
     loop ()
 )
 
-let receiving (port: int) (sender: MailboxProcessor<Message>) =
+let receiving (port: int) (sender: MailboxProcessor<IPEndPoint * Message>) =
     let client = new UdpClient (port)
     let rec loop () = async {
         let! result = client.ReceiveAsync() |> Async.AwaitTask
@@ -41,14 +40,14 @@ let receiving (port: int) (sender: MailboxProcessor<Message>) =
            | Chat str -> printfn "%A says: %s" result.RemoteEndPoint str
            | Ping ->
                printfn "Ping from %A!" result.RemoteEndPoint
-               // TODO: Should send back to the remote endpoint obviously,
-               // not the already created endpoint held by the sendingAgent
-               sender.Post Pong
+               sender.Post (result.RemoteEndPoint, Pong)
            | Pong ->
                printfn "Pong from %A!" result.RemoteEndPoint
         return! loop ()
     }
     loop () |> Async.Start
 
-let ping (sender: MailboxProcessor<Message>) = sender.Post Ping
-let chat (sender: MailboxProcessor<Message>) str = sender.Post (Chat str)
+let ping (sender: MailboxProcessor<IPEndPoint * Message>) port =
+    sender.Post <| (IPEndPoint (IPAddress.Any, port), Ping)
+let chat (sender: MailboxProcessor<IPEndPoint * Message>) port str =
+    sender.Post <| (IPEndPoint (IPAddress.Any, port), Chat str)
