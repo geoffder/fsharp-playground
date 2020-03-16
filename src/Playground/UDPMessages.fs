@@ -4,6 +4,8 @@ open Newtonsoft.Json
 open System.Net
 open System.Net.Sockets
 
+type Agent<'T> = MailboxProcessor<'T>
+
 type Message =
     | Chat of string
     | Ping
@@ -15,7 +17,13 @@ let strToBytes (str: string) =
 let bytesToStr (bs: byte array) =
     bs |> System.Text.Encoding.ASCII.GetString
 
-let sendingAgent () = MailboxProcessor<IPEndPoint * Message>.Start(fun inbox ->
+let delayAction ms f =
+    async {
+        do! Async.Sleep ms
+        do f ()
+    } |> Async.Start
+
+let sendingAgent () = Agent<IPEndPoint * Message>.Start(fun inbox ->
     let client = new UdpClient ()
     let rec loop () = async {
         let! endpoint, msg =  inbox.Receive ()
@@ -29,7 +37,7 @@ let sendingAgent () = MailboxProcessor<IPEndPoint * Message>.Start(fun inbox ->
     loop ()
 )
 
-let receiving (port: int) (sender: MailboxProcessor<IPEndPoint * Message>) =
+let receiving (port: int) (sender: Agent<IPEndPoint * Message>) =
     let client = new UdpClient (port)
     let rec loop () = async {
         let! result = client.ReceiveAsync() |> Async.AwaitTask
@@ -47,7 +55,12 @@ let receiving (port: int) (sender: MailboxProcessor<IPEndPoint * Message>) =
     }
     loop () |> Async.Start
 
-let ping (sender: MailboxProcessor<IPEndPoint * Message>) port =
+let ping (sender: Agent<IPEndPoint * Message>) port =
     sender.Post <| (IPEndPoint (IPAddress.Any, port), Ping)
-let chat (sender: MailboxProcessor<IPEndPoint * Message>) port str =
+
+let chat (sender: Agent<IPEndPoint * Message>) port str =
     sender.Post <| (IPEndPoint (IPAddress.Any, port), Chat str)
+
+let slowHello (sender: Agent<IPEndPoint * Message>) port =
+    fun () -> chat sender port "Hello"
+    |> delayAction 5000
