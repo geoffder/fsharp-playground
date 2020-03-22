@@ -11,6 +11,10 @@ type Message =
     | Ping
     | Pong
 
+let (<--) (a: Agent<'T>) msg = a.Post msg
+let (<->) (a: Agent<'T>) msg = a.PostAndReply msg
+let (<-?->) (a: Agent<'T>) msg = a.TryPostAndReply msg
+
 let strToBytes (str: string) =
     str |> System.Text.Encoding.ASCII.GetBytes
 
@@ -37,6 +41,22 @@ let sendingAgent () = Agent<IPEndPoint * Message>.Start(fun inbox ->
     loop ()
 )
 
+
+let sendingAgent2 (inbox: Agent<IPEndPoint * Message>) =
+    let client = new UdpClient ()
+    let rec loop () = async {
+        let! endpoint, msg =  inbox.Receive ()
+        msg
+        |> JsonConvert.SerializeObject
+        |> strToBytes
+        |> fun bs -> client.Send (bs, bs.Length, endpoint)
+        |> ignore
+        return! loop ()
+    }
+    loop ()
+
+let startSendingAgent () = Agent<IPEndPoint * Message>.Start sendingAgent2
+
 let receiving (port: int) (sender: Agent<IPEndPoint * Message>) =
     let client = new UdpClient (port)
     let rec loop () = async {
@@ -56,10 +76,10 @@ let receiving (port: int) (sender: Agent<IPEndPoint * Message>) =
     loop () |> Async.Start
 
 let ping (sender: Agent<IPEndPoint * Message>) port =
-    sender.Post <| (IPEndPoint (IPAddress.Any, port), Ping)
+    sender <-- (IPEndPoint (IPAddress.Any, port), Ping)
 
 let chat (sender: Agent<IPEndPoint * Message>) port str =
-    sender.Post <| (IPEndPoint (IPAddress.Any, port), Chat str)
+    sender <-- (IPEndPoint (IPAddress.Any, port), Chat str)
 
 let slowHello (sender: Agent<IPEndPoint * Message>) port =
     fun () -> chat sender port "Hello"
