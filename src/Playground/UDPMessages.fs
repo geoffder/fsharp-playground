@@ -13,7 +13,8 @@ type Message =
 
 let (<--) (a: Agent<'T>) msg = a.Post msg
 let (<->) (a: Agent<'T>) msg = a.PostAndReply msg
-let (<-?->) (a: Agent<'T>) msg = a.TryPostAndReply msg
+let (<-?->) (a: Agent<'T>) (msg, ms) = a.TryPostAndReply (msg, ?timeout = Some ms)
+let start (agent: Agent<'T> -> Async<unit>) = Agent<'T>.Start agent
 
 let strToBytes (str: string) =
     str |> System.Text.Encoding.ASCII.GetBytes
@@ -41,8 +42,8 @@ let sendingAgent () = Agent<IPEndPoint * Message>.Start(fun inbox ->
     loop ()
 )
 
-
-let sendingAgent2 (inbox: Agent<IPEndPoint * Message>) =
+// Non-lambda methods of creating Agents (exploration)
+let sendingAgentLoop (inbox: Agent<IPEndPoint * Message>) =
     let client = new UdpClient ()
     let rec loop () = async {
         let! endpoint, msg =  inbox.Receive ()
@@ -55,7 +56,22 @@ let sendingAgent2 (inbox: Agent<IPEndPoint * Message>) =
     }
     loop ()
 
-let startSendingAgent () = Agent<IPEndPoint * Message>.Start sendingAgent2
+let sendingAgent2 () = start sendingAgentLoop
+
+let sendingAgent3 () =
+    let client = new UdpClient ()
+    let agent (inbox: Agent<IPEndPoint * Message>) =
+        let rec loop () = async {
+            let! endpoint, msg =  inbox.Receive ()
+            msg
+            |> JsonConvert.SerializeObject
+            |> strToBytes
+            |> fun bs -> client.Send (bs, bs.Length, endpoint)
+            |> ignore
+            return! loop ()
+        }
+        loop ()
+    start agent
 
 let receiving (port: int) (sender: Agent<IPEndPoint * Message>) =
     let client = new UdpClient (port)
