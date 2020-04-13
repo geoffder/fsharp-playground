@@ -28,10 +28,10 @@ let delayAction ms f =
         do f ()
     } |> Async.Start
 
-let sendingAgent () = Agent<IPEndPoint * Message>.Start(fun inbox ->
-    let client = new UdpClient ()
+let sendingAgent (port: int) = Agent<IPEndPoint * Message>.Start(fun inbox ->
+    let client = new UdpClient (port)
     let rec loop () = async {
-        let! endpoint, msg =  inbox.Receive ()
+        let! endpoint, msg = inbox.Receive ()
         msg
         |> JsonConvert.SerializeObject
         |> strToBytes
@@ -42,40 +42,9 @@ let sendingAgent () = Agent<IPEndPoint * Message>.Start(fun inbox ->
     loop ()
 )
 
-// Non-lambda methods of creating Agents (exploration)
-let sendingAgentLoop (inbox: Agent<IPEndPoint * Message>) =
-    let client = new UdpClient ()
-    let rec loop () = async {
-        let! endpoint, msg =  inbox.Receive ()
-        msg
-        |> JsonConvert.SerializeObject
-        |> strToBytes
-        |> fun bs -> client.Send (bs, bs.Length, endpoint)
-        |> ignore
-        return! loop ()
-    }
-    loop ()
-
-let sendingAgent2 () = start sendingAgentLoop
-
-let sendingAgent3 () =
-    let client = new UdpClient ()
-    let agent (inbox: Agent<IPEndPoint * Message>) =
-        let rec loop () = async {
-            let! endpoint, msg =  inbox.Receive ()
-            msg
-            |> JsonConvert.SerializeObject
-            |> strToBytes
-            |> fun bs -> client.Send (bs, bs.Length, endpoint)
-            |> ignore
-            return! loop ()
-        }
-        loop ()
-    start agent
-
 let receiving (port: int) (sender: Agent<IPEndPoint * Message>) =
     let client = new UdpClient (port)
-    let rec loop () = async {
+    let rec loop i = async {
         let! result = client.ReceiveAsync() |> Async.AwaitTask
         do result.Buffer
         |> bytesToStr
@@ -87,9 +56,10 @@ let receiving (port: int) (sender: Agent<IPEndPoint * Message>) =
                sender.Post (result.RemoteEndPoint, Pong)
            | Pong ->
                printfn "Pong from %A!" result.RemoteEndPoint
-        return! loop ()
+        do printfn "count = %i" i
+        return! loop (i + 1)
     }
-    loop () |> Async.Start
+    loop 0 |> Async.Start
 
 let ping (sender: Agent<IPEndPoint * Message>) port =
     sender <-- (IPEndPoint (IPAddress.Any, port), Ping)
@@ -100,3 +70,11 @@ let chat (sender: Agent<IPEndPoint * Message>) port str =
 let slowHello (sender: Agent<IPEndPoint * Message>) port =
     fun () -> chat sender port "Hello"
     |> delayAction 5000
+
+let blast port sender = async {
+    for i in 1..10 do
+        chat sender port (sprintf "%i" i)
+        // do! Async.Sleep 1
+}
+
+// List.map (blast 4000) [s1; s2] |> Async.Parallel |> Async.RunSynchronously;;
